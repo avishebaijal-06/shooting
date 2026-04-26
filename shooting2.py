@@ -10,78 +10,102 @@ score=0
 life=3
 high_score=0
 treasure=0
+gamestate="start"
+
 
 def draw():
     screen.blit("grave.jpg",(0,0))
+    if gamestate=="start":
+        screen.blit("king",(200,300))
+        screen.blit("vampire",(WIDTH-300,300))
+        screen.blit("treasure",(WIDTH/2,300))
+        screen.draw.text("Welcome to Undead Outbreak\n  press space to start\n Move the King using up and down arrow key\n Press space to shoot\n You have 3 lives and you can collect more once you have 100 treasure score\n Protect the king from the vampires or else he loses lives\n shoot enemies to score\n collect treasure for treasure score\n NOW YOU ARE GOOD TO GO! ",center=(WIDTH/2,HEIGHT/2),fontsize=25)
 
-    player.draw()
-    for i in vampires:
-        i.draw()
-    for i in gems:
-        i.draw()
-    screen.draw.text("score->"+str(score),(50,50),fontsize=30)
-    screen.draw.text("high_score->{}".format(str(high_score)),(50,100),fontsize=30)
-    screen.draw.text(f"Lives->{life}",(300,50),fontsize=30)
-    screen.draw.text(f"treasure->{treasure}",(WIDTH-300,50),fontsize=30)
+    elif gamestate=="play":
+        player.draw()
+        for i in vampires:
+            i.draw()
+        for i in gems:
+            i.draw()
+        screen.draw.text("score->"+str(score),(50,50),fontsize=30)
+        screen.draw.text("high_score->{}".format(str(high_score)),(50,100),fontsize=30)
+        screen.draw.text(f"Lives->{life}",(300,50),fontsize=30)
+        screen.draw.text(f"treasure->{treasure}",(WIDTH-300,50),fontsize=30)
+    else:
+        screen.draw.text("GAME OVER!\n Press space to start over.",center=(WIDTH/2,HEIGHT/2),fontsize=40)
 def update():
-    global score,high_score,life,treasure
-    if keyboard.up:
-        player.y-=10
-    if keyboard.down:
-        player.y+=10
-    if player.y <0:
-        player.y=HEIGHT
-    if player.y>HEIGHT:
-        player.y=0
-    if treasure>100:
-        treasure-=100
-        life+=1
-    if score>high_score:
-        high_score=score    
-        
+    global score,high_score,life,treasure,gamestate
+    if gamestate=="play":
+        if keyboard.up:
+            player.y-=10
+        if keyboard.down:
+            player.y+=10
+        if player.y <0:
+            player.y=HEIGHT
+        if player.y>HEIGHT:
+            player.y=0
+        if treasure>100:
+            treasure-=100
+            life+=1
+        if score>high_score:
+            high_score=score    
+            
 
-    for i in gems:
-        i.x+=speed
-        if i.x>WIDTH:
-            gems.remove(i)
-    for i in vampires:
-            i.x-=speed
-            if i.x<0:
-                vampires.remove(i)
-            if i.colliderect(player):
-                if i.image=="treasure":
-                    treasure+=10
-                else:
-                    if life>0:
-                        life-=1
-                    else:
-                        print("Game Over")
-                vampires.remove(i)
-                continue
-            for g in gems:
-                if g.colliderect(i):
+        for i in gems:
+            i.x+=speed
+            if i.x>WIDTH:
+                gems.remove(i)
+        for i in vampires:
+                i.x-=speed
+                if i.x<0:
+                    vampires.remove(i)
+                if i.colliderect(player):
                     if i.image=="treasure":
                         treasure+=10
                     else:
-                        score+=10    
+                        if life>0:
+                            life-=1
+                        else:
+                            print("Game Over")
+                            gamestate="end"
                     vampires.remove(i)
-                    gems.remove(g)
+                    continue
+                for g in gems:
+                    if g.colliderect(i):
+                        if i.image=="treasure":
+                            treasure+=10
+                        else:
+                            score+=10    
+                        vampires.remove(i)
+                        gems.remove(g)
 
 def on_key_down(key):
-    if key==keys.SPACE:
+    global gamestate, score, life, treasure
+    if key==keys.SPACE and gamestate=="play":
         gem=Actor("diamond")
         gem.pos=player.x+40,player.y-35
         gems.append(gem)
-
+    if key==keys.SPACE and gamestate!="play":
+        gamestate="play"
+        score=0
+        life=3
+        treasure=0
 
 
 def create_vampire():
-    r=random.choice(characters)
-    v=Actor(r)
-    v.pos=WIDTH-100,random.randint(0,HEIGHT)
-    vampires.append(v)
+    if gamestate=="play":
+        r=random.choice(characters)
+        v=Actor(r)
+        v.pos=WIDTH-100,random.randint(0,HEIGHT)
+        vampires.append(v)
 
 clock.schedule_interval(create_vampire,1)         
+
+
+
+
+
+
 
 
 pgzrun.go()
