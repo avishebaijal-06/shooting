@@ -1,4 +1,15 @@
 import pgzrun, random,pyautogui
+
+import firebase_admin
+from firebase_admin import credentials, db
+
+cred = credentials.Certificate("shooting-game-4ac81-firebase-adminsdk-fbsvc-bdb6e4c0e9.json")
+firebase_admin.initialize_app(cred,{
+    "databaseURL":
+    "https://shooting-game-4ac81-default-rtdb.firebaseio.com"
+})
+ref=db.reference("highscore")
+
 WIDTH,HEIGHT=pyautogui.size()
 player=Actor("king.png")
 player.pos=100,HEIGHT/2
@@ -11,8 +22,24 @@ life=3
 high_score=0
 treasure=0
 gamestate="start"
+def save_highscore(score):
 
+    ref = db.reference("highscore")
 
+    old = ref.get()
+
+    if old is None or score > old:
+        ref.set(score)
+        print("Highscore Updated!")
+
+# get high score
+def get_highscore():
+
+    ref = db.reference("highscore")
+
+    return ref.get()
+
+    
 def draw():
     screen.blit("grave.jpg",(0,0))
     if gamestate=="start":
@@ -35,6 +62,10 @@ def draw():
         screen.draw.text("GAME OVER!\n Press space to start over.",center=(WIDTH/2,HEIGHT/2),fontsize=40)
 def update():
     global score,high_score,life,treasure,gamestate
+    save_highscore(score)
+
+    print("Highest Score:", get_highscore())
+
     if gamestate=="play":
         if keyboard.up:
             player.y-=10
@@ -83,6 +114,7 @@ def on_key_down(key):
     global gamestate, score, life, treasure
     if key==keys.SPACE and gamestate=="play":
         gem=Actor("diamond")
+        sounds.shooting.play()
         gem.pos=player.x+40,player.y-35
         gems.append(gem)
     if key==keys.SPACE and gamestate!="play":
@@ -93,7 +125,7 @@ def on_key_down(key):
 
 
 def create_vampire():
-    if gamestate=="play":
+    if gamestate=="play":  
         r=random.choice(characters)
         v=Actor(r)
         v.pos=WIDTH-100,random.randint(0,HEIGHT)
