@@ -3,11 +3,13 @@ import pgzrun, random,pyautogui
 import firebase_admin
 from firebase_admin import credentials, db
 
-cred = credentials.Certificate("shooting-game-4ac81-firebase-adminsdk-fbsvc-bdb6e4c0e9.json")
-firebase_admin.initialize_app(cred,{
-    "databaseURL":
-    "https://shooting-game-4ac81-default-rtdb.firebaseio.com"
-})
+cred = credentials.Certificate("shooting-game-4ac81-firebase-adminsdk-fbsvc-bb0c1c1d34.json")
+if not firebase_admin._apps:
+
+    firebase_admin.initialize_app(cred,{
+        "databaseURL":
+        "https://shooting-game-4ac81-default-rtdb.firebaseio.com"
+    })
 ref=db.reference("highscore")
 
 WIDTH,HEIGHT=pyautogui.size()
@@ -23,22 +25,29 @@ high_score=0
 treasure=0
 gamestate="start"
 def save_highscore(score):
+    try:
+        ref = db.reference("highscore")
 
-    ref = db.reference("highscore")
-
-    old = ref.get()
-
-    if old is None or score > old:
-        ref.set(score)
-        print("Highscore Updated!")
-
+        old = ref.get()
+        print(old)
+        if old is None or score > old:
+            ref.set(score)
+            print("Highscore Updated!")
+    except Exception as e:
+        print(e)
+        
 # get high score
 def get_highscore():
+    try:
+        ref = db.reference("highscore")
+        s=ref.get()
+        print (s)
+        return s
+    except Exception as e:
+        print (e)
+        return 0
 
-    ref = db.reference("highscore")
-
-    return ref.get()
-
+print("Highest Score:", get_highscore())
     
 def draw():
     screen.blit("grave.jpg",(0,0))
@@ -58,13 +67,12 @@ def draw():
         screen.draw.text("high_score->{}".format(str(high_score)),(50,100),fontsize=30)
         screen.draw.text(f"Lives->{life}",(300,50),fontsize=30)
         screen.draw.text(f"treasure->{treasure}",(WIDTH-300,50),fontsize=30)
+        
     else:
         screen.draw.text("GAME OVER!\n Press space to start over.",center=(WIDTH/2,HEIGHT/2),fontsize=40)
 def update():
     global score,high_score,life,treasure,gamestate
-    save_highscore(score)
-
-    print("Highest Score:", get_highscore())
+    
 
     if gamestate=="play":
         if keyboard.up:
@@ -99,6 +107,7 @@ def update():
                         else:
                             print("Game Over")
                             gamestate="end"
+                            save_highscore(score)
                     vampires.remove(i)
                     continue
                 for g in gems:
